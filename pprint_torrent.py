@@ -6,11 +6,12 @@ The binary pieces data is hidden and the piece root hashes are hexlified.
 """
 import argparse
 import binascii
+from copy import deepcopy
 from pathlib import Path
 from pprint import pformat
-from typing import Dict, Any
+from typing import Dict, Any, Union, Optional
 
-from bencodepy import decode
+from bencodepy import decode, encode
 
 __version__ = '1.0.0'
 
@@ -25,12 +26,25 @@ def hexlify_piece_roots(file_tree: Dict[bytes, Any]) -> Dict[bytes, Any]:
     return file_tree
 
 
-def pformat_torrent(metainfo: Dict[bytes, Any], *args: int, **kwargs: bool) -> str:
+def pformat_torrent(metainfo: Dict[bytes, Any],
+                    indent: int = 2,
+                    width: int = 200,
+                    depth: Optional[int] = None,
+                    copy: bool = True) -> str:
     """
     Pretty prints the given metainfo dict into a string. Binary data is hidden. Piece root hashes are hexlified.
 
-    args and kwargs are passed to Python's pprint.pformat.
+    @param metainfo: The metainfo dict to pretty-print
+    @param indent: The indentation width, gets passed to pprint.pformat internally.
+    @param width: The maximum width of a line, gets passed to pprint.pformat internally.
+    @param depth: The maximum depth to show, gets passed to pprint.pformat internally.
+    @param copy: If False, the metainfo dict will be modified inplace (by reference) before pretty-printing. Modifications include
+                 hiding binary data and hexlifying piece root hashes. If True, the metainfo dict will be deep-copied
+                 before applying these changes so that the caller's copy of metainfo will not be affected.
     """
+    if copy:
+        metainfo = deepcopy(metainfo)
+
     if not b'info' in metainfo:
         raise ValueError('Invalid metainfo dict: Missing "info" key')
 
@@ -45,12 +59,43 @@ def pformat_torrent(metainfo: Dict[bytes, Any], *args: int, **kwargs: bool) -> s
     if b'file tree' in metainfo[b'info']:
         metainfo[b'info'][b'file tree'] = hexlify_piece_roots(metainfo[b'info'][b'file tree'])
 
-    return pformat(metainfo, *args, **kwargs)
+    return pformat(metainfo, indent, width, depth)
 
 
-def pprint_torrent(metainfo: Dict[bytes, Any], *args: int, **kwargs: bool) -> None:
+def pprint_torrent(metainfo: Dict[bytes, Any],
+                   indent: int = 2,
+                   width: int = 200,
+                   depth: Optional[int] = None,
+                   copy: bool = True) -> None:
     """Do the same as pformat_torrent but print to stdout directly."""
-    print(pformat_torrent(metainfo, *args, **kwargs))
+    print(pformat_torrent(metainfo, indent, width, depth, copy=copy))
+
+
+def load_torrent(path: Union[Path, str]) -> Dict[bytes, Any]:
+    """Load a torrent file from the given path and return the metainfo dict."""
+    if not isinstance(path, Path):
+        if not isinstance(path, str):
+            raise ValueError('path must be a str or Path object')
+        path = Path(path)
+
+    with path.open('rb') as fh:
+        metainfo = decode(fh.read())
+
+    if not isinstance(metainfo, dict):
+        raise ValueError('Invalid torrent data: Does not contain a metainfo dict')
+
+    return metainfo
+
+
+def save_torrent(path: Union[Path, str], metainfo: Dict[bytes, Any]) -> None:
+    """Save the given metainfo dict as a torrent file to the given path."""
+    if not isinstance(path, Path):
+        if not isinstance(path, str):
+            raise ValueError('path must be a str or Path object')
+        path = Path(path)
+
+    with path.open('wb') as fh:
+        fh.write(encode(metainfo))
 
 
 def main() -> None:
@@ -67,10 +112,8 @@ def main() -> None:
         print('Error: The specified torrent file does not exist')
         return
 
-    with args.torrent_file.open('rb') as fh:
-        metainfo = decode(fh.read())
-
-    pprint_torrent(metainfo, args.indent, args.width, args.depth)
+    metainfo = load_torrent(args.torrent_file)
+    pprint_torrent(metainfo, args.indent, args.width, args.depth, copy=False)
 
 
 if __name__ == '__main__':
