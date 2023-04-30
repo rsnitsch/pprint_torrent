@@ -12,6 +12,8 @@ from typing import Dict, Any
 
 from bencodepy import decode
 
+__version__ = '1.0.0'
+
 
 def hexlify_piece_roots(file_tree: Dict[bytes, Any]) -> Dict[bytes, Any]:
     """Recursively hexlify all piece roots binary data in the given file tree dict."""
@@ -53,7 +55,8 @@ def pprint_torrent(metainfo: Dict[bytes, Any], *args: int, **kwargs: bool) -> No
 
 def main() -> None:
     """Pretty-print a given torrent file to stdout."""
-    parser = argparse.ArgumentParser(description='Pretty-print a given torrent file\'s metainfo dict to stdout.')
+    parser = argparse.ArgumentParser(description='Pretty-print a given torrent file\'s metainfo dict to stdout.',
+                                     epilog='Version: %s' % __version__)
     parser.add_argument('torrent_file', type=Path, help='Path to the torrent file')
     parser.add_argument('-i', '--indent', type=int, default=2, help='Indentation width (default: 2)')
     parser.add_argument('-w', '--width', type=int, default=200, help='Maximum width of a line (default: 200)')
