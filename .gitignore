@@ -1,1 +1,5 @@
 Pipfile.lock
+build/
+dist/
+pprint_torrent.egg-info/
+*.torrent
