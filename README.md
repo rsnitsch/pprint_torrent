@@ -43,6 +43,8 @@ Output:
 
 ## Installation
 
+pprint_torrent requires Python 3.
+
 Execute:
 
     pip install pprint_torrent
