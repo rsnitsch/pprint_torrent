@@ -3,7 +3,7 @@
 Pretty-print the contents of torrent files!
 
 pprint_torrent can be used to inspect the contents of torrent files. The metainfo dict is pretty-printed
-with indendation of sub-levels. The maximum depth can be limited as well. To keep the output compact, the long
+with indentation of sub-levels. The maximum depth can be limited as well. To keep the output compact, the long
 binary `pieces` hash sequence is hidden from the output automatically. `pieces root` hashes from v2 torrents are
 hexlified (both in the `file tree` and in the `piece layers` dict).
 
